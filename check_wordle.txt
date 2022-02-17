@@ -1,0 +1,31 @@
+const MISS: u8 = 0;
+const BLOW: u8 = 1;
+const HIT: u8 = 2;
+
+#[test]
+fn t_check_wordle() {
+    check_wordle("test".to_string(), "test2".to_string());
+}
+fn check_wordle(chk: String, word: String) -> Vec<u8> {
+    let mut result = Vec::with_capacity(chk.len());
+    if chk.len() == word.len() {
+        for (i, c) in chk.chars().enumerate() {
+            for (t, w) in word.chars().enumerate() {
+                if w == c {
+                    if t == i {
+                        result[i] = HIT;
+                        break;
+                    } else {
+                        result[i] = BLOW;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    for r in result {
+        print!("{}", r);
+    }
+    println!("");
+    result
+}
