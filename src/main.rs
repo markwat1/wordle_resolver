@@ -36,6 +36,9 @@ fn t_check_wordle() {
     let r = check_wordle(&"civic".to_string(), &"cynic".to_string());
     let answer: Vec<u8> = vec![HIT, MISS, MISS, HIT, HIT];
     assert_eq!(r, answer);
+    //    let r = check_wordle(&"shining".to_string(), &"singing".to_string());
+    //    let answer: Vec<u8> = vec![HIT, MISS, BLOW, BLOW, HIT, HIT, HIT];
+    //    assert_eq!(r, answer);
 }
 
 ///
@@ -209,9 +212,16 @@ fn main() {
         line.clear();
     }
 
-    //    for (k, v) in &histgram {
-    //        println!("{} : {},{},{},{},{}", k, v[0], v[1], v[2], v[3], v[4]);
-    //    }
+    for (k, v) in &histgram {
+        for (i, h) in v.iter().enumerate() {
+            if i == 0 {
+                print!("{} : {}", k, h);
+            } else {
+                print!(",{}", h);
+            }
+        }
+        println!("");
+    }
     if words.len() > 0 {
         for w in &words {
             let weight = word_weight.entry(w).or_insert(0);
