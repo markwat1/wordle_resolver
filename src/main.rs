@@ -36,9 +36,9 @@ fn t_check_wordle() {
     let r = check_wordle(&"civic".to_string(), &"cynic".to_string());
     let answer: Vec<u8> = vec![HIT, MISS, MISS, HIT, HIT];
     assert_eq!(r, answer);
-    //    let r = check_wordle(&"shining".to_string(), &"singing".to_string());
-    //    let answer: Vec<u8> = vec![HIT, MISS, BLOW, BLOW, HIT, HIT, HIT];
-    //    assert_eq!(r, answer);
+    let r = check_wordle(&"shining".to_string(), &"singing".to_string());
+    let answer: Vec<u8> = vec![HIT, MISS, BLOW, BLOW, HIT, HIT, HIT];
+    assert_eq!(r, answer);
 }
 
 ///
@@ -51,6 +51,25 @@ fn check_wordle(guess: &String, word: &String) -> Vec<u8> {
     }
     assert_eq!(result.len(), guess.len());
     if guess.len() == word.len() {
+        // check HIT
+        for (i, c) in guess.chars().enumerate() {
+            if word.chars().nth(i).unwrap() == c {
+                // HIT
+                result[i] = HIT;
+            }
+        }
+        // check BLOW
+        for (i, c) in guess.chars().enumerate() {
+            if result[i] != HIT {
+                for (t, w) in word.chars().enumerate() {
+                    if w == c && i != t && result[i] == MISS && result[t] != HIT {
+                        result[i] = BLOW;
+                    }
+                }
+            }
+        }
+
+        /*
         for (t, w) in word.chars().enumerate() {
             let mut hit: bool = false;
             let mut blow_pos = word.len();
@@ -69,6 +88,7 @@ fn check_wordle(guess: &String, word: &String) -> Vec<u8> {
                 result[blow_pos] = BLOW;
             }
         }
+         */
     }
     //    println!("{} : {}", &guess, &word);
     //    for r in &result {
