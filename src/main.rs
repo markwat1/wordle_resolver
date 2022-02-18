@@ -13,13 +13,11 @@ const HIT: u8 = 2;
 #[test]
 fn t_check_wordle() {
     let r = check_wordle(&"test".to_string(), &"test2".to_string());
-    for i in r {
-        assert_eq!(i, MISS);
-    }
+    let answer: Vec<u8> = vec![MISS, MISS, MISS, MISS];
+    assert_eq!(r, answer);
     let r = check_wordle(&"test2".to_string(), &"test2".to_string());
-    for i in r {
-        assert_eq!(i, HIT);
-    }
+    let answer: Vec<u8> = vec![HIT, HIT, HIT, HIT, HIT];
+    assert_eq!(r, answer);
     let r = check_wordle(&"abcde".to_string(), &"etaio".to_string());
     let answer: Vec<u8> = vec![BLOW, MISS, MISS, MISS, BLOW];
     assert_eq!(r, answer);
@@ -41,7 +39,6 @@ fn t_check_wordle() {
 }
 
 ///
-/// check_wordle
 /// calculate check wordle result
 ///
 fn check_wordle(guess: &String, word: &String) -> Vec<u8> {
@@ -78,13 +75,16 @@ fn check_wordle(guess: &String, word: &String) -> Vec<u8> {
     result
 }
 
-fn calc_weight(str: String, histgram: &HashMap<char, u64>) -> u64 {
+fn calc_weight(str: String, histgram: &HashMap<char, Vec<u32>>) -> u64 {
     let mut weight_list = HashMap::new();
+    let mut pos = 0;
     for c in str.chars() {
         if c.is_alphabetic() && histgram.contains_key(&c) {
             let weight = weight_list.entry(c).or_insert(0u64);
-            *weight = *histgram.get(&c).expect("notfound");
+            let h = histgram.get(&c).expect("notfound");
+            *weight = h[pos] as u64;
         }
+        pos += 1;
     }
     let mut weight: u64 = 0;
     //    print!("{} : ", str);
@@ -130,20 +130,48 @@ fn match_result(result: Vec<u8>, r: &String) -> bool {
     }
     true
 }
+fn new_u32_vec(s: usize) -> Vec<u32> {
+    let mut v = Vec::with_capacity(s);
+    for _i in 0..s {
+        v.push(0u32);
+    }
+    v
+}
 
 fn main() {
-    let allwords = "five_letters.txt".to_string();
+    let allwords = "words.txt".to_string();
     let args: Vec<String> = env::args().collect();
     let mut result_list: Vec<(String, String)> = Vec::new();
+    let mut exclude_list: Vec<String> = Vec::new();
+    let mut length: usize = 5;
     if args.len() > 1 {
         let result_pattern = Regex::new(r"([a-z]+):([0-2]+)").unwrap();
+        let exclude_pattern = Regex::new(r"^-([a-z]+)$").unwrap();
+        let option_pattern = Regex::new(r"^-l([0-9]+)$").unwrap();
         for r in args {
+            let mut skip = false;
             for cap in result_pattern.captures_iter(&r) {
                 result_list.push((cap[1].to_string(), cap[2].to_string()));
+                skip = true;
+            }
+            if skip {
+                continue;
+            };
+            for cap in exclude_pattern.captures_iter(&r) {
+                exclude_list.push(cap[1].to_string());
+                skip = true;
+            }
+            if skip {
+                continue;
+            };
+            for cap in option_pattern.captures_iter(&r) {
+                length = match cap[1].parse::<usize>() {
+                    Ok(v) => v,
+                    Err(_) => return,
+                }
             }
         }
     }
-
     let fs = match File::open(allwords) {
         Err(why) => panic!("Could not open {}", why),
         Ok(fs) => fs,
@@ -153,12 +181,19 @@ fn main() {
     let mut histgram = HashMap::new();
     let mut word_weight = HashMap::new();
     let mut words = Vec::new();
+    let is_alpha = Regex::new(r"^[0-9a-z]+$").unwrap();
     while reader.read_line(&mut line).expect("read fail") > 0 {
         let l = line.to_lowercase().trim().to_string().clone();
+        if l.len() != length || exclude_list.contains(&l) || is_alpha.is_match(&l) == false {
+            line.clear();
+            continue;
+        }
+        let mut pos = 0;
         for c in l.chars() {
             if c.is_alphabetic() {
-                let count = histgram.entry(c).or_insert(0u64);
-                *count += 1;
+                let count = histgram.entry(c).or_insert(new_u32_vec(length));
+                count[pos] += 1;
+                pos += 1;
             }
         }
         let mut result_ok = true;
@@ -175,7 +210,7 @@ fn main() {
     }
 
     //    for (k, v) in &histgram {
-    //        println!("{} : {}", v, k);
+    //        println!("{} : {},{},{},{},{}", k, v[0], v[1], v[2], v[3], v[4]);
     //    }
     if words.len() > 0 {
         for w in &words {
