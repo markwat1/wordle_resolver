@@ -202,7 +202,6 @@ fn main() {
     let mut reader = BufReader::new(fs);
     let mut line = String::new();
     let mut histgram = HashMap::new();
-    let mut word_weight = HashMap::new();
     let mut words = Vec::new();
     let is_alpha = Regex::new(r"^[0-9a-z]+$").unwrap();
     while reader.read_line(&mut line).expect("read fail") > 0 {
@@ -231,22 +230,27 @@ fn main() {
         }
         line.clear();
     }
-
-    for (k, v) in &histgram {
-        for (i, h) in v.iter().enumerate() {
-            if i == 0 {
-                print!("{} : {}", k, h);
-            } else {
-                print!(",{}", h);
+    /*
+        for (k, v) in &histgram {
+            for (i, h) in v.iter().enumerate() {
+                if i == 0 {
+                    print!("{} : {}", k, h);
+                } else {
+                    print!(",{}", h);
+                }
             }
+            println!("");
         }
-        println!("");
-    }
+    */
+    let mut word_weight = HashMap::new();
     if words.len() > 0 {
+        println!("candidate {}", words.len());
         for w in &words {
             let weight = word_weight.entry(w).or_insert(0);
             *weight = calc_weight(w.to_string(), &histgram);
-            //        println!("{} : {}", w, weight);
+            if words.len() < 10 {
+                println!("{} = {}", w, *weight);
+            }
         }
         let min = minimum_weight(&word_weight);
         println!(
